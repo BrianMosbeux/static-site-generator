@@ -1,6 +1,5 @@
 import unittest
-from htmlnode import HTMLNode
-import htmlnode
+from htmlnode import HTMLNode, LeafNode
 
 class TestHTMLNode(unittest.TestCase):
     def test_empty(self):
@@ -19,6 +18,38 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(node.value, None)
         self.assertEqual(node.children, [child_node1, child_node2])
         self.assertEqual(node.props, {"id": "main"})
+
+
+class TestLeafNode(unittest.TestCase):
+    def test_leaf_to_html_p(self):
+        node = LeafNode("p", "Hello, world!")
+        self.assertEqual(node.to_html(), "<p>Hello, world!</p>")
+
+    def test_leaf_to_html_a(self):
+        node = LeafNode("a", "link", props={"href": "https://google.com"})
+        self.assertEqual(node.to_html(), '<a href="https://google.com">link</a>')
+
+    def test_leaf_to_html_no_tag(self):
+        node = LeafNode(None, "Hello, world!")
+        self.assertEqual(node.to_html(), "Hello, world!")
+
+    def test_leaf_with_children(self):
+        with self.assertRaises(TypeError):
+            node = LeafNode(None, value="hello", children=["a", "b"])
+
+    def test_leaf_empty(self):
+        with self.assertRaises(TypeError):
+            node = LeafNode()
+
+    def test_leaf_tag_none(self):
+        node = LeafNode(None, "Hi there")
+        self.assertEqual(repr(node), "LeafNode(None, Hi there, None)")
+
+    def test_leaf_no_value_raises(self):
+        node = LeafNode("p", None)
+        with self.assertRaises(ValueError):
+            node.to_html()
+        
 
 
 
