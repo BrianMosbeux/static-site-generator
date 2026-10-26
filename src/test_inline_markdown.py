@@ -1,6 +1,6 @@
 import unittest
 from textnode import TextNode, TextType
-from inline_markdown import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
+from inline_markdown import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link 
 
 class TestSplitNodesDelimiter(unittest.TestCase):
     def test_split_code(self):
@@ -112,6 +112,67 @@ class TextExtractMarkdownLinks(unittest.TestCase):
         expected = [("to boot dev", "https://www.boot.dev"), ("to youtube", "https://www.youtube.com/@bootdotdev")]
         matches = extract_markdown_links(text)
         self.assertListEqual(expected, matches)
+
+class TestSplitNodesImage(unittest.TestCase):
+    def test_split_images(self):
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_image([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode("second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_image_with_trailing_text(self):
+        node = TextNode("![a](1) trailing text", TextType.TEXT)
+        new = split_nodes_image([node])
+        expected = [TextNode("a", TextType.IMAGE, "1"), TextNode(" trailing text", TextType.TEXT, None)]
+        self.assertListEqual(new, expected)
+
+    def test_split_image_no_image(self):
+        node = TextNode("just some text", TextType.TEXT)
+        new = split_nodes_image([node])
+        expected = [TextNode("just some text", TextType.TEXT, None)]
+        self.assertListEqual(new, expected)
+
+class TestSplitNodesLink(unittest.TestCase):
+    def test_split_links(self):
+        node = TextNode(
+            "This is text with an [url](https://i.imgur.com/zjjcJKZ.png) and another [second url](https://i.imgur.com/3elNhQu.png)",
+            TextType.TEXT,
+        )
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+            [
+                TextNode("This is text with an ", TextType.TEXT),
+                TextNode("url", TextType.LINK, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.TEXT),
+                TextNode("second url", TextType.LINK, "https://i.imgur.com/3elNhQu.png"),
+            ],
+            new_nodes,
+        )
+
+    def test_split_links_with_trailing_text(self):
+        node = TextNode("[a](1) trailing text", TextType.TEXT)
+        new = split_nodes_link([node])
+        expected = [TextNode("a", TextType.LINK, "1"), TextNode(" trailing text", TextType.TEXT, None)]
+        self.assertListEqual(new, expected)
+
+
+    def test_split_link_no_link(self):
+        node = TextNode("just some text", TextType.TEXT)
+        new = split_nodes_link([node])
+        expected = [TextNode("just some text", TextType.TEXT, None)]
+        self.assertListEqual(new, expected)
+
+
 
 if __name__ == "__main__":
     unittest.main()

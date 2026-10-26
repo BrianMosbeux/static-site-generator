@@ -31,3 +31,57 @@ def extract_markdown_images(text: str) -> list[tuple]:
 def extract_markdown_links(text: str) -> list[tuple]:
     matches = re.findall(r"(?<!!)\[(.*?)\]\((.*?)\)", text)
     return matches
+
+def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
+    new_nodes = []
+    for n in old_nodes:
+        if n.text_type != TextType.TEXT:
+            new_nodes.append(n)
+            continue
+        matches = extract_markdown_images(n.text)
+        if len(matches) == 0:
+            new_nodes.append(n)
+            continue
+        splitted_nodes = []
+        text = n.text
+        while matches:
+            tup = matches.pop(0)
+            delimiter = f"![{tup[0]}]({tup[1]})"
+            splitted_text = text.split(delimiter, 1)
+            if splitted_text[0] != "":
+                splitted_nodes.append(TextNode(splitted_text[0], TextType.TEXT))
+            splitted_nodes.append(TextNode(tup[0], TextType.IMAGE, tup[1]))
+            text = splitted_text[1]
+        new_nodes.extend(splitted_nodes)
+        if text != "":
+            new_nodes.append(TextNode(text, TextType.TEXT))
+    return new_nodes
+
+
+def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
+    new_nodes = []
+    for n in old_nodes:
+        if n.text_type != TextType.TEXT:
+            new_nodes.append(n)
+            continue
+        matches = extract_markdown_links(n.text)
+        if len(matches) == 0:
+            new_nodes.append(n)
+            continue
+        splitted_nodes = []
+        text = n.text
+        while matches:
+            tup = matches.pop(0)
+            delimiter = f"[{tup[0]}]({tup[1]})"
+            splitted_text = text.split(delimiter, 1)
+            if splitted_text[0] != "":
+                splitted_nodes.append(TextNode(splitted_text[0], TextType.TEXT))
+            splitted_nodes.append(TextNode(tup[0], TextType.LINK, tup[1]))
+            text = splitted_text[1]
+        new_nodes.extend(splitted_nodes)
+        if text != "":
+            new_nodes.append(TextNode(text, TextType.TEXT))
+    return new_nodes
+
+
+
