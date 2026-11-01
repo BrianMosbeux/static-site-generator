@@ -2,6 +2,7 @@ import os
 import shutil
 
 def copy_content(source: str, destination: str) -> None:
+    print(destination)
     if os.path.exists(destination):
         shutil.rmtree(destination)
     os.mkdir(destination)
